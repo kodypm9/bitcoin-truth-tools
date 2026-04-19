@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitcoin Truth Tools — The Charts They Don't Want You To See</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+
+:root {
+  --btc: #F7931A;
+  --btc-glow: rgba(247,147,26,0.25);
+  --m2: #4a9eff;
+  --bg: #06060f;
+  --bg2: #0c0c1a;
+  --surface: rgba(255,255,255,0.04);
+  --surface2: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #eeeef8;
+  --muted: #66668a;
+  --green: #22d47a;
+  --red: #ff4466;
+  --purple: #a855f7;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Noise texture overlay */
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:999;
+  opacity:0.4;
+}
+
+/* Grid bg */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(247,147,26,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(247,147,26,0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+  pointer-events:none;
+  z-index:0;
+}
+
+.wrap { max-width:1080px; margin:0 auto; padding:0 24px; position:relative; z-index:1; }
+
+/* ── TOP BAR ── */
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 20px 0 0;
+  margin-bottom: 0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.brand {
+  display:flex; align-items:center; gap:14px;
+}
+
+.brand-icon {
+  width:44px; height:44px;
+  background: var(--btc);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:24px; color:#000;
+  box-shadow: 0 0 24px var(--btc-glow);
+  animation: breathe 4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes breathe {
+  0%,100%{ box-shadow: 0 0 20px var(--btc-glow); }
+  50%{ box-shadow: 0 0 48px rgba(247,147,26,0.5); }
+}
+
+.brand-text { line-height:1; }
+.brand-name {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px; letter-spacing:3px;
+  color: var(--btc);
+}
+.brand-sub {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--muted);
+  letter-spacing:2px;
+}
+
+.live-pill {
+  display:flex; align-items:center; gap:7px;
+  background: rgba(255,68,102,0.1);
+  border:1px solid rgba(255,68,102,0.25);
+  border-radius:20px;
+  padding:6px 14px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--red);
+  letter-spacing:2px;
+}
+.live-dot {
+  width:7px;height:7px;
+  background:var(--red);border-radius:50%;
+  animation: blink 1.2s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.15}}
+
+/* ── HERO ── */
+.hero {
+  padding: 52px 0 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.hero-tag {
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--btc);
+  letter-spacing:4px;
+  margin-bottom:18px;
+  display:flex; align-items:center; gap:12px;
+}
+.hero-tag::after {
+  content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,var(--btc),transparent);
+  max-width:160px;
+}
+
+.hero-h1 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size: clamp(48px,9vw,96px);
+  line-height:0.92;
+  letter-spacing:2px;
+  margin-bottom:20px;
+}
+.hero-h1 .o{color:var(--btc);}
+.hero-h1 .b{color:var(--m2);}
+
+.hero-desc {
+  font-size:16px; color:var(--muted);
+  max-width:580px; line-height:1.75;
+  border-left:3px solid var(--btc);
+  padding-left:18px;
+}
+
+/* ── NAV TABS ── */
+.tab-nav {
+  display:flex; gap:0;
+  border-bottom:1px solid var(--border);
+  margin-bottom:0;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.tab-nav::-webkit-scrollbar{display:none;}
+
+.tab-btn {
+  display:flex; align-items:center; gap:10px;
+  padding:18px 28px;
+  background:none; border:none;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:16px; letter-spacing:3px;
+  color:var(--muted);
+  cursor:pointer;
+  border-bottom:3px solid transparent;
+  margin-bottom:-1px;
+  transition:all 0.2s;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{
+  color:var(--btc);
+  border-bottom-color:var(--btc);
+}
+.tab-num {
+  font-size:11px;
+  background:var(--surface2);
+  border-radius:3px;
+  padding:2px 7px;
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:0;
+}
+.tab-btn.active .tab-num{
+  background:var(--btc-glow);
+  color:var(--btc);
+}
+
+/* ── TAB PANELS ── */
+.tab-panel{ display:none; padding:48px 0; }
+.tab-panel.active{ display:block; }
+
+/* ════════════════════════════════════════
+   TAB 1 — BITCOIN VS THE PRINTER
+════════════════════════════════════════ */
+
+.stats-row {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:14px;
+  margin-bottom:36px;
+}
+
+.stat-box {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:18px 20px;
+  position:relative;
+  overflow:hidden;
+  transition:border-color 0.2s, transform 0.2s;
+}
+.stat-box:hover{border-color:var(--border2);transform:translateY(-2px);}
+.stat-box::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+}
+.stat-box.s-btc::before{background:var(--btc);}
+.stat-box.s-m2::before{background:var(--m2);}
+.stat-box.s-red::before{background:var(--red);}
+.stat-box.s-pur::before{background:var(--purple);}
+
+.sb-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--muted);
+  letter-spacing:2px;margin-bottom:8px;
+}
+.sb-val{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:30px;letter-spacing:1px;line-height:1;
+  margin-bottom:4px;
+}
+.s-btc .sb-val{color:var(--btc);}
+.s-m2 .sb-val{color:var(--m2);}
+.s-red .sb-val{color:var(--red);}
+.s-pur .sb-val{color:var(--purple);}
+.sb-sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+
+.chart-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:28px 28px 20px;
+  margin-bottom:28px;
+  position:relative;
+  overflow:hidden;
+}
+.chart-card::after{
+  content:'';position:absolute;
+  top:-80px;right:-80px;
+  width:300px;height:300px;
+  background:radial-gradient(circle,rgba(247,147,26,0.05),transparent 70%);
+  pointer-events:none;
+}
+
+.chart-top{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  margin-bottom:24px;flex-wrap:wrap;gap:12px;
+}
+.chart-title-text{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;letter-spacing:3px;color:#fff;
+}
+.legend{display:flex;gap:20px;flex-wrap:wrap;}
+.leg-item{
+  display:flex;align-items:center;gap:7px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--muted);
+  cursor:pointer;transition:color 0.2s;
+  user-select:none;
+}
+.leg-item:hover{color:var(--text);}
+.leg-item.on{color:var(--text);}
+.leg-dot{width:10px;height:10px;border-radius:2px;}
+
+canvas#mainChart{
+  width:100%;height:360px;display:block;cursor:crosshair;
+}
+
+/* Halving timeline */
+.halvings{
+  display:flex;gap:0;
+  position:relative;overflow-x:auto;
+  padding-bottom:8px;margin-bottom:32px;
+}
+.halvings::before{
+  content:'';position:absolute;
+  top:28px;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(247,147,26,0.3),transparent);
+}
+.h-item{
+  flex:1;min-width:130px;
+  padding:0 10px;text-align:center;
+  position:relative;
+}
+.h-dot{
+  width:14px;height:14px;
+  background:var(--btc);border-radius:50%;
+  margin:0 auto 14px;
+  box-shadow:0 0 14px rgba(247,147,26,0.5);
+  position:relative;z-index:1;
+}
+.h-item.future .h-dot{
+  background:transparent;
+  border:2px solid var(--btc);
+  box-shadow:none;
+}
+.h-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--btc);letter-spacing:2px;margin-bottom:3px;}
+.h-year{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;margin-bottom:2px;}
+.h-reward{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.h-gain{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);font-weight:700;}
+.h-item.future .h-gain{color:var(--muted);font-style:italic;}
+
+/* Events grid */
+.section-hd{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:4px;color:var(--muted);
+  margin-bottom:16px;
+  display:flex;align-items:center;gap:14px;
+}
+.section-hd::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.events-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:10px;
+  margin-bottom:32px;
+}
+.ev-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:14px 16px;
+  display:flex;gap:12px;align-items:flex-start;
+  transition:all 0.2s;
+}
+.ev-card:hover{
+  border-color:rgba(247,147,26,0.2);
+  background:rgba(247,147,26,0.03);
+  transform:translateY(-2px);
+}
+.ev-yr{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:30px;color:var(--btc);
+  line-height:1;min-width:50px;
+}
+.ev-name{font-size:13px;font-weight:700;margin-bottom:4px;}
+.ev-desc{font-size:11px;color:var(--muted);line-height:1.5;font-family:'JetBrains Mono',monospace;}
+.ev-tag{
+  display:inline-block;margin-top:6px;
+  font-size:10px;padding:2px 8px;border-radius:3px;
+  font-family:'JetBrains Mono',monospace;
+}
+.t-print{background:rgba(255,68,102,0.12);color:var(--red);border:1px solid rgba(255,68,102,0.25);}
+.t-halv{background:rgba(247,147,26,0.12);color:var(--btc);border:1px solid rgba(247,147,26,0.25);}
+.t-crisis{background:rgba(74,158,255,0.1);color:var(--m2);border:1px solid rgba(74,158,255,0.2);}
+
+/* Verdict */
+.verdict{
+  background:linear-gradient(135deg,rgba(247,147,26,0.07),rgba(247,147,26,0.02));
+  border:1px solid rgba(247,147,26,0.18);
+  border-radius:12px;padding:40px;
+  margin-bottom:32px;position:relative;overflow:hidden;
+}
+.verdict::before{
+  content:'"';position:absolute;
+  top:-20px;left:16px;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:180px;color:rgba(247,147,26,0.05);
+  line-height:1;pointer-events:none;
+}
+.verdict-txt{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(22px,4vw,42px);
+  line-height:1.1;letter-spacing:1px;
+  margin-bottom:20px;position:relative;
+}
+.verdict-txt .o{color:var(--btc);}
+.verdict-txt .b{color:var(--m2);}
+.verdict-sub{font-size:15px;color:var(--muted);line-height:1.8;max-width:680px;position:relative;}
+
+/* ════════════════════════════════════════
+   TAB 2 — FIAT FUNERAL CALCULATOR
+════════════════════════════════════════ */
+
+.funeral-hero{
+  text-align:center;
+  padding:20px 0 40px;
+}
+.funeral-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(36px,7vw,72px);
+  line-height:0.95;letter-spacing:2px;
+  margin-bottom:16px;
+}
+.funeral-title .o{color:var(--btc);}
+.funeral-title .r{color:var(--red);}
+.funeral-sub{
+  font-size:16px;color:var(--muted);
+  max-width:520px;margin:0 auto;line-height:1.7;
+}
+
+.calc-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px;
+  margin-bottom:32px;
+}
+@media(max-width:700px){.calc-grid{grid-template-columns:1fr;}}
+
+.input-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;padding:28px;
+}
+.input-card h3{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:3px;
+  color:var(--btc);margin-bottom:20px;
+}
+
+.field{margin-bottom:18px;}
+.field label{
+  display:block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--muted);
+  letter-spacing:2px;margin-bottom:8px;
+}
+.field input, .field select{
+  width:100%;
+  background:rgba(255,255,255,0.06);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:12px 16px;
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:16px;
+  outline:none;
+  transition:border-color 0.2s;
+}
+.field input:focus,.field select:focus{border-color:var(--btc);}
+.field select option{background:var(--bg2);}
+
+.calc-btn{
+  width:100%;
+  background:var(--btc);
+  color:#000;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;letter-spacing:3px;
+  padding:16px;border:none;border-radius:8px;
+  cursor:pointer;margin-top:8px;
+  transition:all 0.2s;
+  box-shadow:0 4px 20px rgba(247,147,26,0.25);
+}
+.calc-btn:hover{
+  background:#ff9f20;
+  transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(247,147,26,0.4);
+}
+
+.results-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;padding:28px;
+}
+.results-card h3{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:3px;
+  color:var(--text);margin-bottom:20px;
+}
+
+.result-row{
+  display:flex;justify-content:space-between;
+  align-items:flex-end;
+  padding:14px 0;
+  border-bottom:1px solid var(--border);
+  gap:12px;
+}
+.result-row:last-child{border-bottom:none;}
+.rr-label{
+  font-size:13px;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;
+  line-height:1.4;
+}
+.rr-val{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:26px;letter-spacing:1px;
+  text-align:right;flex-shrink:0;
+}
+.rr-val.good{color:var(--green);}
+.rr-val.bad{color:var(--red);}
+.rr-val.btc{color:var(--btc);}
+.rr-val.neutral{color:var(--text);}
+
+.verdict-box{
+  margin-top:24px;
+  background:linear-gradient(135deg,rgba(255,68,102,0.08),rgba(255,68,102,0.02));
+  border:1px solid rgba(255,68,102,0.2);
+  border-radius:8px;padding:20px;
+}
+.vb-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:20px;letter-spacing:2px;
+  color:var(--red);margin-bottom:8px;
+}
+.vb-text{font-size:13px;color:var(--muted);line-height:1.7;font-family:'JetBrains Mono',monospace;}
+
+.placeholder-state{
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  height:200px;
+  color:var(--muted);
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;text-align:center;gap:12px;
+}
+.placeholder-icon{
+  font-size:40px;opacity:0.3;
+}
+
+/* ════════════════════════════════════════
+   TAB 3 — ORANGE PILL SCORECARD
+════════════════════════════════════════ */
+
+.scorecard-hero{
+  text-align:center;padding:20px 0 40px;
+}
+.sc-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(36px,7vw,72px);
+  line-height:0.95;letter-spacing:2px;margin-bottom:16px;
+}
+.sc-title .o{color:var(--btc);}
+.sc-sub{font-size:16px;color:var(--muted);max-width:500px;margin:0 auto;line-height:1.7;}
+
+.quiz-progress{
+  margin-bottom:28px;
+}
+.progress-info{
+  display:flex;justify-content:space-between;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;color:var(--muted);
+  margin-bottom:8px;
+}
+.progress-bar{
+  height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;
+}
+.progress-fill{
+  height:100%;background:var(--btc);border-radius:2px;
+  transition:width 0.4s ease;
+}
+
+.question-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:32px;margin-bottom:20px;
+  animation:slideIn 0.3s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+.q-number{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--btc);
+  letter-spacing:3px;margin-bottom:12px;
+}
+.q-text{
+  font-size:20px;font-weight:700;
+  line-height:1.4;margin-bottom:24px;
+}
+
+.options{display:flex;flex-direction:column;gap:10px;}
+.opt-btn{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  padding:14px 20px;
+  color:var(--text);
+  font-family:'Syne',sans-serif;
+  font-size:14px;font-weight:600;
+  text-align:left;cursor:pointer;
+  transition:all 0.2s;
+  display:flex;align-items:center;gap:12px;
+}
+.opt-btn::before{
+  content:'';
+  width:18px;height:18px;
+  border:2px solid var(--border2);
+  border-radius:50%;flex-shrink:0;
+  transition:all 0.2s;
+}
+.opt-btn:hover{
+  border-color:rgba(247,147,26,0.4);
+  background:rgba(247,147,26,0.05);
+}
+.opt-btn:hover::before{border-color:var(--btc);}
+.opt-btn.selected{
+  border-color:var(--btc);
+  background:rgba(247,147,26,0.08);
+}
+.opt-btn.selected::before{
+  background:var(--btc);
+  border-color:var(--btc);
+  box-shadow:0 0 8px var(--btc-glow);
+}
+
+.quiz-nav{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:12px;flex-wrap:wrap;
+}
+.nav-btn{
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:12px 28px;
+  color:var(--text);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:16px;letter-spacing:2px;
+  cursor:pointer;transition:all 0.2s;
+}
+.nav-btn:hover{border-color:var(--btc);color:var(--btc);}
+.nav-btn.primary{
+  background:var(--btc);color:#000;
+  border-color:var(--btc);
+}
+.nav-btn.primary:hover{background:#ff9f20;border-color:#ff9f20;color:#000;}
+.nav-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+/* Score results */
+.score-results{
+  text-align:center;padding:20px 0;
+  animation:fadeUp 0.6s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.score-circle{
+  width:160px;height:160px;
+  border-radius:50%;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  margin:0 auto 28px;
+  position:relative;
+}
+.score-circle::before{
+  content:'';
+  position:absolute;inset:-4px;
+  border-radius:50%;
+  background:conic-gradient(var(--btc) var(--pct), var(--surface2) 0deg);
+  z-index:0;
+}
+.score-circle::after{
+  content:'';
+  position:absolute;inset:8px;
+  background:var(--bg2);
+  border-radius:50%;
+  z-index:1;
+}
+.score-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:52px;color:var(--btc);
+  position:relative;z-index:2;line-height:1;
+}
+.score-max{
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;color:var(--muted);
+  position:relative;z-index:2;
+}
+
+.score-grade{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(32px,6vw,56px);
+  letter-spacing:3px;margin-bottom:8px;
+}
+.score-label{
+  font-size:16px;color:var(--muted);
+  margin-bottom:32px;line-height:1.6;
+  max-width:480px;margin-left:auto;margin-right:auto;
+}
+
+.breakdown{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:12px;
+  text-align:left;margin-bottom:28px;
+}
+.bd-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;padding:16px;
+}
+.bd-q{font-size:12px;color:var(--muted);margin-bottom:6px;line-height:1.4;font-family:'JetBrains Mono',monospace;}
+.bd-a{font-size:13px;font-weight:700;margin-bottom:4px;}
+.bd-pts{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+}
+.pts-good{color:var(--green);}
+.pts-mid{color:var(--btc);}
+.pts-bad{color:var(--red);}
+
+.restart-btn{
+  background:none;border:1px solid var(--border2);
+  border-radius:6px;padding:12px 32px;
+  color:var(--muted);
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;cursor:pointer;
+  transition:all 0.2s;margin-top:16px;
+}
+.restart-btn:hover{border-color:var(--btc);color:var(--btc);}
+
+/* ════════════════════════════════════════
+   SHARED CTA
+════════════════════════════════════════ */
+.cta-block{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:40px;text-align:center;
+  margin-bottom:48px;
+  position:relative;overflow:hidden;
+}
+.cta-block::before{
+  content:'';position:absolute;
+  bottom:-60px;left:50%;transform:translateX(-50%);
+  width:280px;height:100px;
+  background:radial-gradient(ellipse,rgba(247,147,26,0.12),transparent 70%);
+  pointer-events:none;
+}
+.cta-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--btc);
+  letter-spacing:4px;margin-bottom:14px;
+}
+.cta-h2{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(28px,5vw,52px);
+  letter-spacing:2px;color:#fff;margin-bottom:14px;
+}
+.cta-p{
+  color:var(--muted);font-size:15px;
+  max-width:480px;margin:0 auto 28px;line-height:1.7;
+}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.btn-pri{
+  background:var(--btc);color:#000;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:2px;
+  padding:14px 36px;border:none;border-radius:6px;
+  cursor:pointer;text-decoration:none;
+  display:inline-block;
+  transition:all 0.2s;
+  box-shadow:0 4px 20px rgba(247,147,26,0.3);
+}
+.btn-pri:hover{background:#ff9f20;transform:translateY(-2px);box-shadow:0 8px 32px rgba(247,147,26,0.5);}
+.btn-sec{
+  background:transparent;color:var(--text);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:2px;
+  padding:14px 36px;
+  border:1px solid var(--border2);border-radius:6px;
+  cursor:pointer;text-decoration:none;
+  display:inline-block;transition:all 0.2s;
+}
+.btn-sec:hover{border-color:var(--btc);color:var(--btc);transform:translateY(-2px);}
+.cta-note{
+  margin-top:16px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;color:var(--muted);
+}
+.cta-note span{color:var(--btc);}
+
+/* Footer */
+footer{
+  border-top:1px solid var(--border);
+  padding:28px 0;
+  display:flex;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+.foot-note{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--muted);
+}
+.foot-brand{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:13px;letter-spacing:3px;color:var(--btc);
+}
+
+/* Tooltip */
+#tt{
+  position:fixed;
+  background:rgba(8,8,20,0.96);
+  border:1px solid var(--border2);
+  border-radius:8px;padding:14px 18px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;pointer-events:none;
+  z-index:500;display:none;
+  backdrop-filter:blur(12px);
+  min-width:190px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6);
+}
+#tt .tt-yr{color:var(--muted);font-size:10px;letter-spacing:2px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+#tt .tt-r{display:flex;justify-content:space-between;gap:16px;margin-bottom:5px;}
+#tt .tt-lbl{color:var(--muted);}
+#tt .tt-v{font-weight:700;}
+#tt .c-btc{color:var(--btc);}
+#tt .c-m2{color:var(--m2);}
+#tt .c-grn{color:var(--green);}
+
+/* Animations */
+.fade-up{opacity:0;transform:translateY(18px);animation:fadeUp 0.55s ease forwards;}
+.fade-up:nth-child(1){animation-delay:0.05s;}
+.fade-up:nth-child(2){animation-delay:0.12s;}
+.fade-up:nth-child(3){animation-delay:0.19s;}
+.fade-up:nth-child(4){animation-delay:0.26s;}
+
+@media(max-width:640px){
+  .chart-card{padding:16px 12px;}
+  .verdict{padding:24px;}
+  .cta-block{padding:28px 20px;}
+  canvas#mainChart{height:260px;}
+  .input-card,.results-card{padding:20px;}
+}
+</style>
+</head>
+<body>
+
+<div id="tt">
+  <div class="tt-yr" id="tt-yr"></div>
+  <div class="tt-r"><span class="tt-lbl">BTC Price</span><span class="tt-v c-btc" id="tt-btc"></span></div>
+  <div class="tt-r"><span class="tt-lbl">M2 Supply</span><span class="tt-v c-m2" id="tt-m2"></span></div>
+  <div class="tt-r"><span class="tt-lbl">All-Time Gain</span><span class="tt-v c-grn" id="tt-gain"></span></div>
+</div>
+
+<div class="wrap">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">₿</div>
+      <div class="brand-text">
+        <div class="brand-name">Bitcoin Truth Tools</div>
+        <div class="brand-sub">// the data they ignore</div>
+      </div>
+    </div>
+    <div class="live-pill"><div class="live-dot"></div>DATA THROUGH 2024</div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero fade-up">
+    <div class="hero-tag">// THREE TOOLS. ONE TRUTH.</div>
+    <h1 class="hero-h1">
+      <span class="o">HARD MONEY</span><br>
+      <span class="b">HARD FACTS</span><br>
+      HARD TO IGNORE
+    </h1>
+    <p class="hero-desc">
+      Free tools built for Bitcoin stackers and people who haven't stacked yet but should be.
+      No sign up. No KYC. Just the numbers.
+    </p>
+  </div>
+
+  <!-- TAB NAV -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('chart',this)">
+      <span>📈</span> BTC VS THE PRINTER <span class="tab-num">01</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('funeral',this)">
+      <span>⚰️</span> FIAT FUNERAL CALC <span class="tab-num">02</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('scorecard',this)">
+      <span>🟠</span> ORANGE PILL SCORE <span class="tab-num">03</span>
+    </button>
+  </div>
+
+  <!-- ═══════ TAB 1: CHART ═══════ -->
+  <div class="tab-panel active" id="tab-chart">
+
+    <div class="stats-row fade-up">
+      <div class="stat-box s-btc">
+        <div class="sb-label">// BTC ALL-TIME RETURN</div>
+        <div class="sb-val">+27,000,000%</div>
+        <div class="sb-sub">$0.001 → $65K+ peak</div>
+      </div>
+      <div class="stat-box s-m2">
+        <div class="sb-label">// M2 MONEY SUPPLY GROWTH</div>
+        <div class="sb-val">+185%</div>
+        <div class="sb-sub">$8.5T in 2009 → $21T+ today</div>
+      </div>
+      <div class="stat-box s-red">
+        <div class="sb-label">// DOLLAR PURCHASING POWER</div>
+        <div class="sb-val">-96%</div>
+        <div class="sb-sub">since Fed was created in 1913</div>
+      </div>
+      <div class="stat-box s-pur">
+        <div class="sb-label">// BITCOIN AGE</div>
+        <div class="sb-val">15 YRS</div>
+        <div class="sb-sub">Genesis block: Jan 3, 2009</div>
+      </div>
+    </div>
+
+    <div class="chart-card fade-up">
+      <div class="chart-top">
+        <div class="chart-title-text">BTC PRICE vs M2 MONEY SUPPLY — 2009–2024</div>
+        <div class="legend">
+          <div class="leg-item on" id="lb" onclick="tog('btc')">
+            <div class="leg-dot" style="background:var(--btc)"></div>BTC (LOG SCALE)
+          </div>
+          <div class="leg-item on" id="lm" onclick="tog('m2')">
+            <div class="leg-dot" style="background:var(--m2)"></div>M2 SUPPLY
+          </div>
+          <div class="leg-item on" id="le" onclick="tog('ev')">
+            <div class="leg-dot" style="background:var(--purple);border-radius:50%"></div>EVENTS
+          </div>
+        </div>
+      </div>
+      <canvas id="mainChart"></canvas>
+    </div>
+
+    <div class="fade-up">
+      <div class="section-hd">HALVING TIMELINE</div>
+      <div class="halvings">
+        <div class="h-item">
+          <div class="h-dot"></div>
+          <div class="h-label">GENESIS</div>
+          <div class="h-year">2009</div>
+          <div class="h-reward">50 BTC/block</div>
+          <div class="h-gain">$0.001</div>
+        </div>
+        <div class="h-item">
+          <div class="h-dot"></div>
+          <div class="h-label">1ST HALVING</div>
+          <div class="h-year">2012</div>
+          <div class="h-reward">25 BTC/block</div>
+          <div class="h-gain">+9,900% cycle</div>
+        </div>
+        <div class="h-item">
+          <div class="h-dot"></div>
+          <div class="h-label">2ND HALVING</div>
+          <div class="h-year">2016</div>
+          <div class="h-reward">12.5 BTC/block</div>
+          <div class="h-gain">+2,960% cycle</div>
+        </div>
+        <div class="h-item">
+          <div class="h-dot"></div>
+          <div class="h-label">3RD HALVING</div>
+          <div class="h-year">2020</div>
+          <div class="h-reward">6.25 BTC/block</div>
+          <div class="h-gain">+1,290% cycle</div>
+        </div>
+        <div class="h-item">
+          <div class="h-dot"></div>
+          <div class="h-label">4TH HALVING</div>
+          <div class="h-year">2024</div>
+          <div class="h-reward">3.125 BTC/block</div>
+          <div class="h-gain">in progress 🟠</div>
+        </div>
+        <div class="h-item future">
+          <div class="h-dot"></div>
+          <div class="h-label">5TH HALVING</div>
+          <div class="h-year">~2028</div>
+          <div class="h-reward">1.5625 BTC/block</div>
+          <div class="h-gain">incoming...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fade-up">
+      <div class="section-hd">KEY MOMENTS</div>
+      <div class="events-grid">
+        <div class="ev-card"><div class="ev-yr">2009</div><div><div class="ev-name">Genesis Block</div><div class="ev-desc">Satoshi embeds bank bailout headline. The message was clear from day one.</div><span class="ev-tag t-halv">GENESIS</span></div></div>
+        <div class="ev-card"><div class="ev-yr">2010</div><div><div class="ev-name">10,000 BTC for Pizza</div><div class="ev-desc">First real transaction. Worth $600M+ at peak. Most expensive meal in history.</div><span class="ev-tag t-halv">MILESTONE</span></div></div>
+        <div class="ev-card"><div class="ev-yr">2013</div><div><div class="ev-name">Cyprus Banking Crisis</div><div class="ev-desc">Government seized deposits. Bitcoin surged 1,000%. The world saw it as a lifeboat.</div><span class="ev-tag t-crisis">CRISIS</span></div></div>
+        <div class="ev-card"><div class="ev-yr">2017</div><div><div class="ev-name">Wall Street Notices</div><div class="ev-desc">BTC hits $20K. CME launches futures. M2 crosses $14 trillion.</div><span class="ev-tag t-print">WALL ST</span></div></div>
+        <div class="ev-card"><div class="ev-yr">2020</div><div><div class="ev-name">The Printer Goes BRRR</div><div class="ev-desc">Fed prints $4T in months. MicroStrategy buys BTC as treasury reserve. Everything changes.</div><span class="ev-tag t-print">PRINTER</span></div></div>
+        <div class="ev-card"><div class="ev-yr">2021</div><div><div class="ev-name">ATH $69K + El Salvador</div><div class="ev-desc">El Salvador makes BTC legal tender. Nation states start paying attention. M2 hits $22T.</div><span class="ev-tag t-halv">ATH</span></div></div>
+        <div class="ev-card"><div class="ev-yr">2022</div><div><div class="ev-name">Rate Hikes — BTC -75%</div><div class="ev-desc">Aggressive hikes crush risk assets. Every long-term holder is still massively up.</div><span class="ev-tag t-crisis">BEAR</span></div></div>
+        <div class="ev-card"><div class="ev-yr">2024</div><div><div class="ev-name">ETF Approval + 4th Halving</div><div class="ev-desc">BlackRock, Fidelity ETFs approved. $12B flows in first weeks. New ATH follows.</div><span class="ev-tag t-halv">ETF + HALVING</span></div></div>
+      </div>
+    </div>
+
+    <div class="verdict fade-up">
+      <div class="verdict-txt">
+        EVERY TIME THEY PRINT,<br>
+        <span class="o">BITCOIN ABSORBS IT.</span><br>
+        THIS IS NOT <span class="b">THEORY.</span><br>
+        THIS IS <span class="o">15 YEARS OF DATA.</span>
+      </div>
+      <p class="verdict-sub">
+        M2 money supply has grown 185% since Bitcoin was created.
+        Bitcoin has grown 27,000,000%. Your savings account returned maybe 2% per year.
+        The math is not complicated. Most people just never look at it side by side.
+      </p>
+    </div>
+
+    <div class="cta-block fade-up">
+      <div class="cta-tag">// KNOW YOUR NUMBERS</div>
+      <div class="cta-h2">READY TO TRACK YOUR STACK?</div>
+      <p class="cta-p">Understanding the macro is step one. Knowing exactly where YOUR stack stands is step two.</p>
+      <div class="cta-btns">
+        <a href="YOUR_WHOP_LINK" class="btn-pri">GET THE TRACKER 🟠</a>
+        <a href="YOUR_WHOP_LINK" class="btn-sec">VIEW ON WHOP</a>
+      </div>
+      <div class="cta-note">Basic Tracker <span>$9.99</span> &nbsp;·&nbsp; Pro System <span>$19.99</span> &nbsp;·&nbsp; No subscription. Ever.</div>
+    </div>
+
+  </div><!-- /tab-chart -->
+
+  <!-- ═══════ TAB 2: FIAT FUNERAL ═══════ -->
+  <div class="tab-panel" id="tab-funeral">
+
+    <div class="funeral-hero fade-up">
+      <h2 class="funeral-title">
+        THE <span class="r">FIAT</span><br>
+        <span class="o">FUNERAL</span><br>
+        CALCULATOR
+      </h2>
+      <p class="funeral-sub">
+        See exactly how much of your income inflation has quietly stolen —
+        and what Bitcoin would have done with the same money.
+      </p>
+    </div>
+
+    <div class="calc-grid fade-up">
+      <div class="input-card">
+        <h3>YOUR NUMBERS</h3>
+
+        <div class="field">
+          <label>ANNUAL SALARY ($)</label>
+          <input type="number" id="fc-salary" placeholder="e.g. 55000" value="55000" min="1">
+        </div>
+        <div class="field">
+          <label>YEARS WORKING</label>
+          <input type="number" id="fc-years" placeholder="e.g. 10" value="10" min="1" max="50">
+        </div>
+        <div class="field">
+          <label>SAVINGS RATE (%)</label>
+          <input type="number" id="fc-save" placeholder="e.g. 10" value="10" min="0" max="100">
+        </div>
+        <div class="field">
+          <label>SAVINGS ACCOUNT APY (%)</label>
+          <input type="number" id="fc-apy" placeholder="e.g. 4.5" value="4.5" step="0.1">
+        </div>
+        <div class="field">
+          <label>AVERAGE INFLATION RATE (%)</label>
+          <input type="number" id="fc-inf" placeholder="e.g. 4.2" value="4.2" step="0.1">
+        </div>
+
+        <button class="calc-btn" onclick="calcFuneral()">CALCULATE THE DAMAGE</button>
+      </div>
+
+      <div class="results-card" id="fc-results">
+        <h3>YOUR RESULTS</h3>
+        <div id="fc-output">
+          <div class="placeholder-state">
+            <div class="placeholder-icon">⚰️</div>
+            <div>Enter your numbers and hit calculate<br>to see what fiat has cost you.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-block fade-up">
+      <div class="cta-tag">// STOP GUESSING YOUR STACK</div>
+      <div class="cta-h2">NOW TRACK YOUR BITCOIN PROPERLY</div>
+      <p class="cta-p">You just saw what fiat did to your money. Make sure every sat you stack is tracked, measured and working for you.</p>
+      <div class="cta-btns">
+        <a href="YOUR_WHOP_LINK" class="btn-pri">GET THE TRACKER 🟠</a>
+        <a href="YOUR_WHOP_LINK" class="btn-sec">VIEW ON WHOP</a>
+      </div>
+      <div class="cta-note">Basic Tracker <span>$9.99</span> &nbsp;·&nbsp; Pro System <span>$19.99</span> &nbsp;·&nbsp; No subscription. Ever.</div>
+    </div>
+
+  </div><!-- /tab-funeral -->
+
+  <!-- ═══════ TAB 3: SCORECARD ═══════ -->
+  <div class="tab-panel" id="tab-scorecard">
+
+    <div class="scorecard-hero fade-up">
+      <h2 class="sc-title">
+        THE <span class="o">ORANGE PILL</span><br>SCORECARD
+      </h2>
+      <p class="sc-sub">
+        12 questions. Find out how financially vulnerable you really are to fiat —
+        and how ready you are to fix it with Bitcoin.
+      </p>
+    </div>
+
+    <div id="quiz-area" class="fade-up"></div>
+
+  </div><!-- /tab-scorecard -->
+
+  <footer>
+    <div class="foot-note">Data: CoinGecko, Federal Reserve H.6 Release. Educational purposes only.</div>
+    <div class="foot-brand">BITCOIN TRUTH TOOLS</div>
+  </footer>
+
+</div><!-- /wrap -->
+
+<script>
+// ═══════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'chart') { setTimeout(drawChart, 50); }
+  if (id === 'scorecard' && !quizInit) { initQuiz(); quizInit = true; }
+}
+
+// ═══════════════════════════════════════════
+// TAB 1 — CHART
+// ═══════════════════════════════════════════
+const chartData = {
+  years: [2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024],
+  btc:   [0.001,0.08,4,13,800,320,430,960,14000,3700,7200,29000,47000,16500,42000,65000],
+  m2:    [8.5,8.8,9.6,10.2,11.0,11.7,12.3,13.2,13.8,14.4,15.3,19.4,21.6,21.3,20.8,21.2],
+  events:{2009:'Genesis Block',2012:'1st Halving',2013:'Cyprus Crisis',2016:'2nd Halving',2017:'Bull Run $20K',2020:'BRRR + 3rd Halving',2021:'ATH $69K',2024:'ETF + 4th Halving'}
+};
+
+let showBtc=true, showM2=true, showEv=true;
+
+function tog(line){
+  if(line==='btc'){showBtc=!showBtc;document.getElementById('lb').classList.toggle('on',showBtc);}
+  if(line==='m2'){showM2=!showM2;document.getElementById('lm').classList.toggle('on',showM2);}
+  if(line==='ev'){showEv=!showEv;document.getElementById('le').classList.toggle('on',showEv);}
+  drawChart();
+}
+
+const canvas=document.getElementById('mainChart');
+const ctx=canvas.getContext('2d');
+
+function resizeChart(){
+  const r=canvas.parentElement.getBoundingClientRect();
+  canvas.width=r.width-56;
+  canvas.height=window.innerWidth<640?260:360;
+  drawChart();
+}
+
+function logY(v,mn,mx,H,pt,pb){
+  const lmn=Math.log10(mn),lmx=Math.log10(mx),lv=Math.log10(Math.max(v,mn));
+  return H-pb-((lv-lmn)/(lmx-lmn))*(H-pt-pb);
+}
+function linY(v,mn,mx,H,pt,pb){
+  return H-pb-((v-mn)/(mx-mn))*(H-pt-pb);
+}
+
+function drawChart(){
+  const W=canvas.width,H=canvas.height;
+  const pL=68,pR=64,pT=16,pB=38;
+  const cW=W-pL-pR,cH=H-pT-pB;
+  const n=chartData.years.length;
+  ctx.clearRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){const y=pT+(cH/5)*i;ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(pL+cW,y);ctx.stroke();}
+
+  const xs=cW/(n-1);
+
+  // Event markers
+  if(showEv){
+    chartData.years.forEach((yr,i)=>{
+      if(chartData.events[yr]){
+        const x=pL+i*xs;
+        const g=ctx.createLinearGradient(x,pT,x,pT+cH);
+        g.addColorStop(0,'rgba(168,85,247,0.22)');g.addColorStop(1,'rgba(168,85,247,0)');
+        ctx.fillStyle=g;ctx.fillRect(x-1,pT,2,cH);
+        ctx.fillStyle='rgba(168,85,247,0.7)';ctx.beginPath();ctx.arc(x,pT+8,4,0,Math.PI*2);ctx.fill();
+      }
+    });
+  }
+
+  // M2 area
+  if(showM2){
+    const mn=8,mx=23;
+    ctx.beginPath();
+    chartData.years.forEach((yr,i)=>{
+      const x=pL+i*xs,y=linY(chartData.m2[i],mn,mx,H,pT,pB);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle='#4a9eff';ctx.lineWidth=2.5;ctx.setLineDash([6,3]);ctx.stroke();ctx.setLineDash([]);
+    ctx.lineTo(pL+(n-1)*xs,H-pB);ctx.lineTo(pL,H-pB);ctx.closePath();
+    const mg=ctx.createLinearGradient(0,pT,0,H-pB);
+    mg.addColorStop(0,'rgba(74,158,255,0.11)');mg.addColorStop(1,'rgba(74,158,255,0.01)');
+    ctx.fillStyle=mg;ctx.fill();
+    ctx.fillStyle='rgba(74,158,255,0.55)';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='left';
+    [10,14,18,22].forEach(v=>{
+      if(v>=mn&&v<=mx){const y=linY(v,mn,mx,H,pT,pB);ctx.fillText('$'+v+'T',pL+cW+8,y+4);}
+    });
+  }
+
+  // BTC line
+  if(showBtc){
+    const mn=0.0001,mx=100000;
+    ctx.beginPath();
+    chartData.years.forEach((yr,i)=>{
+      const x=pL+i*xs,y=logY(chartData.btc[i],mn,mx,H,pT,pB);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    const bg=ctx.createLinearGradient(0,0,W,0);
+    bg.addColorStop(0,'#F7931A');bg.addColorStop(0.5,'#ffaa30');bg.addColorStop(1,'#F7931A');
+    ctx.strokeStyle=bg;ctx.lineWidth=3;ctx.shadowColor='rgba(247,147,26,0.45)';ctx.shadowBlur=8;ctx.stroke();ctx.shadowBlur=0;
+    chartData.years.forEach((yr,i)=>{
+      const x=pL+i*xs,y=logY(chartData.btc[i],mn,mx,H,pT,pB);
+      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+      ctx.fillStyle='#F7931A';ctx.fill();
+      ctx.strokeStyle='#000';ctx.lineWidth=1.5;ctx.stroke();
+    });
+    ctx.fillStyle='rgba(247,147,26,0.55)';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='right';
+    [0.01,1,100,10000,100000].forEach(v=>{
+      const y=logY(v,mn,mx,H,pT,pB);
+      if(y>pT&&y<H-pB){
+        const lbl=v>=1000?'$'+(v/1000)+'K':v>=1?'$'+v:'$'+v;
+        ctx.fillText(lbl,pL-8,y+4);
+      }
+    });
+  }
+
+  // X labels
+  ctx.fillStyle='rgba(180,180,210,0.45)';ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='center';
+  chartData.years.forEach((yr,i)=>{
+    const x=pL+i*xs;
+    if(i%2===0||n<18)ctx.fillText(yr,x,H-pB+18);
+    ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,H-pB);ctx.lineTo(x,H-pB+5);ctx.stroke();
+  });
+}
+
+// Tooltip
+const tt=document.getElementById('tt');
+canvas.addEventListener('mousemove',e=>{
+  const r=canvas.getBoundingClientRect();
+  const mx=e.clientX-r.left;
+  const pL=68,pR=64,xs=(canvas.width-pL-pR)/(chartData.years.length-1);
+  let ci=0,md=Infinity;
+  chartData.years.forEach((_,i)=>{const d=Math.abs(mx-(pL+i*xs));if(d<md){md=d;ci=i;}});
+  if(md<xs*0.6){
+    const yr=chartData.years[ci],bp=chartData.btc[ci],m2v=chartData.m2[ci];
+    const gain=ci>0?'+'+((bp/chartData.btc[0]-1)*100).toLocaleString(undefined,{maximumFractionDigits:0})+'%':'—';
+    document.getElementById('tt-yr').textContent=yr+(chartData.events[yr]?' — '+chartData.events[yr]:'');
+    document.getElementById('tt-btc').textContent=bp>=1000?'$'+(bp/1000).toFixed(1)+'K':'$'+bp.toFixed(3);
+    document.getElementById('tt-m2').textContent='$'+m2v+'T';
+    document.getElementById('tt-gain').textContent=gain;
+    tt.style.display='block';
+    tt.style.left=(e.clientX+16)+'px';
+    tt.style.top=(e.clientY-50)+'px';
+  }
+});
+canvas.addEventListener('mouseleave',()=>tt.style.display='none');
+
+window.addEventListener('resize',resizeChart);
+setTimeout(resizeChart,100);
+
+// ═══════════════════════════════════════════
+// TAB 2 — FIAT FUNERAL CALCULATOR
+// ═══════════════════════════════════════════
+function calcFuneral(){
+  const salary=parseFloat(document.getElementById('fc-salary').value)||55000;
+  const years=parseFloat(document.getElementById('fc-years').value)||10;
+  const saveRate=parseFloat(document.getElementById('fc-save').value)/100||0.1;
+  const apy=parseFloat(document.getElementById('fc-apy').value)/100||0.045;
+  const inf=parseFloat(document.getElementById('fc-inf').value)/100||0.042;
+
+  const totalEarned=salary*years;
+  const totalSaved=totalEarned*saveRate;
+
+  // Purchasing power lost on total earnings
+  const pwrLost=totalEarned*(1-Math.pow(1-inf,years));
+
+  // Savings account final value
+  const savingsVal=totalSaved*Math.pow(1+apy,years);
+  const savingsGain=savingsVal-totalSaved;
+
+  // Bitcoin DCA value (historical avg ~100% annual return, conservative 40%)
+  const btcConservative=totalSaved*Math.pow(1.40,years);
+  const btcOptimistic=totalSaved*Math.pow(1.80,years);
+
+  const fmt=n=>n>=1e6?'$'+(n/1e6).toFixed(2)+'M':n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+
+  document.getElementById('fc-output').innerHTML=`
+    <div class="result-row">
+      <div class="rr-label">Total earned over ${years} years</div>
+      <div class="rr-val neutral">${fmt(totalEarned)}</div>
+    </div>
+    <div class="result-row">
+      <div class="rr-label">Total saved (${(saveRate*100).toFixed(0)}% savings rate)</div>
+      <div class="rr-val neutral">${fmt(totalSaved)}</div>
+    </div>
+    <div class="result-row">
+      <div class="rr-label">Purchasing power stolen by inflation</div>
+      <div class="rr-val bad">-${fmt(pwrLost)}</div>
+    </div>
+    <div class="result-row">
+      <div class="rr-label">Savings account final value (${(apy*100).toFixed(1)}% APY)</div>
+      <div class="rr-val neutral">${fmt(savingsVal)}</div>
+    </div>
+    <div class="result-row">
+      <div class="rr-label">Real savings gain after inflation</div>
+      <div class="rr-val ${savingsGain-pwrLost>0?'good':'bad'}">${savingsGain-pwrLost>0?'+':'-'}${fmt(Math.abs(savingsGain-pwrLost))}</div>
+    </div>
+    <div class="result-row">
+      <div class="rr-label">Same savings in Bitcoin (conservative 40%/yr avg)</div>
+      <div class="rr-val btc">${fmt(btcConservative)}</div>
+    </div>
+    <div class="result-row">
+      <div class="rr-label">Same savings in Bitcoin (optimistic 80%/yr avg)</div>
+      <div class="rr-val btc">${fmt(btcOptimistic)}</div>
+    </div>
+    <div class="verdict-box">
+      <div class="vb-title">THE VERDICT</div>
+      <div class="vb-text">
+        Over ${years} years, inflation silently stole ${fmt(pwrLost)} from your purchasing power.<br><br>
+        Your savings account beat inflation by just ${fmt(Math.max(0,savingsGain-pwrLost))}.<br><br>
+        The same savings in Bitcoin (conservative estimate) would be worth <strong style="color:var(--btc)">${fmt(btcConservative)}</strong>.<br><br>
+        The difference is not a small rounding error. It is the difference between working forever and not having to.
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════
+// TAB 3 — ORANGE PILL SCORECARD
+// ═══════════════════════════════════════════
+const questions=[
+  {
+    q:"Do you know exactly how much of your paycheck loses value to inflation each year?",
+    opts:["Yes, I calculate it regularly","I have a rough idea","Not really","I never thought about it"],
+    pts:[3,2,1,0],
+    cat:"Fiat Awareness"
+  },
+  {
+    q:"Do you own any Bitcoin?",
+    opts:["Yes, and I DCA regularly","Yes, but just a small amount","No, but I'm seriously considering it","No and I don't plan to"],
+    pts:[3,2,1,0],
+    cat:"Bitcoin Exposure"
+  },
+  {
+    q:"Where is most of your savings held right now?",
+    opts:["Bitcoin / hard assets","Mix of Bitcoin and cash","Mostly cash / savings account","401k / stocks only"],
+    pts:[3,2,1,0],
+    cat:"Savings Strategy"
+  },
+  {
+    q:"How much of your monthly income goes toward savings or investment?",
+    opts:["Over 20%","10–20%","5–10%","Less than 5%"],
+    pts:[3,2,1,0],
+    cat:"Savings Rate"
+  },
+  {
+    q:"Do you know what your Bitcoin cost basis is?",
+    opts:["Yes, to the dollar","Roughly","I have no idea","I don't own Bitcoin"],
+    pts:[3,2,1,0],
+    cat:"Financial Clarity"
+  },
+  {
+    q:"How do you feel about the US dollar long term?",
+    opts:["It will continue losing value — I'm protecting myself","I'm concerned but not sure what to do","I think it'll be fine","I've never really thought about it"],
+    pts:[3,2,1,0],
+    cat:"Macro Awareness"
+  },
+  {
+    q:"Do you have a target goal for your Bitcoin stack?",
+    opts:["Yes — specific SATS or BTC target","A rough number in mind","No specific target","I don't stack Bitcoin"],
+    pts:[3,2,1,0],
+    cat:"Goal Setting"
+  },
+  {
+    q:"How long would your savings last if you lost your job today?",
+    opts:["Over 12 months","6–12 months","3–6 months","Less than 3 months"],
+    pts:[3,2,1,0],
+    cat:"Financial Runway"
+  },
+  {
+    q:"Do you understand what the Bitcoin halving means for price?",
+    opts:["Yes — supply shock, historical bull runs","I have a general idea","I've heard the term but not sure","No idea"],
+    pts:[3,2,1,0],
+    cat:"Bitcoin Knowledge"
+  },
+  {
+    q:"How would you describe your current financial trajectory?",
+    opts:["Building generational wealth actively","Making progress but slowly","Treading water","Falling behind"],
+    pts:[3,2,1,0],
+    cat:"Financial Trajectory"
+  },
+  {
+    q:"Do you track your Bitcoin purchases — cost basis, ROI, SATS total?",
+    opts:["Yes, meticulously","Roughly in my head","I should but I don't","I don't own Bitcoin yet"],
+    pts:[3,2,1,0],
+    cat:"Tracking Discipline"
+  },
+  {
+    q:"What is your primary financial goal for the next 10 years?",
+    opts:["Stack 1+ BTC and build lasting wealth","Get out of debt and start stacking","Save enough to be comfortable","I haven't set a 10-year goal"],
+    pts:[3,2,1,0],
+    cat:"Long-Term Vision"
+  }
+];
+
+let current=0,answers=[],quizInit=false;
+
+function initQuiz(){
+  current=0;answers=[];
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const area=document.getElementById('quiz-area');
+  if(current>=questions.length){showResults();return;}
+  const q=questions[current];
+  const pct=Math.round((current/questions.length)*100);
+  area.innerHTML=`
+    <div class="quiz-progress">
+      <div class="progress-info">
+        <span>QUESTION ${current+1} OF ${questions.length}</span>
+        <span>${pct}% COMPLETE</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="question-card">
+      <div class="q-number">// QUESTION ${String(current+1).padStart(2,'0')} — ${q.cat.toUpperCase()}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">
+        ${q.opts.map((o,i)=>`<button class="opt-btn" onclick="selectOpt(${i},this)">${o}</button>`).join('')}
+      </div>
+    </div>
+    <div class="quiz-nav">
+      <button class="nav-btn" onclick="prevQ()" ${current===0?'disabled':''}>← BACK</button>
+      <button class="nav-btn primary" id="nextBtn" onclick="nextQ()" disabled>
+        ${current===questions.length-1?'SEE MY SCORE →':'NEXT →'}
+      </button>
+    </div>
+  `;
+  if(answers[current]!==undefined){
+    const btns=area.querySelectorAll('.opt-btn');
+    btns[answers[current]].classList.add('selected');
+    document.getElementById('nextBtn').disabled=false;
+  }
+}
+
+function selectOpt(i,btn){
+  document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  answers[current]=i;
+  document.getElementById('nextBtn').disabled=false;
+}
+
+function nextQ(){
+  if(answers[current]===undefined)return;
+  current++;
+  renderQuestion();
+}
+
+function prevQ(){
+  if(current>0){current--;renderQuestion();}
+}
+
+function showResults(){
+  const total=answers.reduce((s,a,i)=>s+questions[i].pts[a],0);
+  const max=questions.length*3;
+  const pct=Math.round((total/max)*100);
+
+  let grade,color,desc;
+  if(pct>=85){grade='ORANGE PILLED';color='var(--btc)';desc='You get it. You\'re building the right way. Stay consistent, keep stacking, and make sure your numbers are tracked properly.';}
+  else if(pct>=65){grade='WAKING UP';color='var(--green)';desc='You\'re on the right path but there are gaps. Close them fast — every month of inaction is purchasing power lost.';}
+  else if(pct>=40){grade='STILL ASLEEP';color='var(--m2)';desc='You have some awareness but fiat is winning right now. Time to make some serious changes to your financial strategy.';}
+  else{grade='FULLY FIAT';color='var(--red)';desc='The system is working exactly as designed — for them, not for you. The good news: awareness is step one and you just took it.';}
+
+  const area=document.getElementById('quiz-area');
+  area.innerHTML=`
+    <div class="score-results">
+      <div class="score-circle" style="--pct:${pct*3.6}deg">
+        <div class="score-num">${total}</div>
+        <div class="score-max">/ ${max}</div>
+      </div>
+      <div class="score-grade" style="color:${color}">${grade}</div>
+      <p class="score-label">${desc}</p>
+      <div class="breakdown">
+        ${questions.map((q,i)=>{
+          const a=answers[i];
+          const pts=q.pts[a];
+          const cls=pts===3?'pts-good':pts===2?'pts-mid':'pts-bad';
+          return `<div class="bd-card">
+            <div class="bd-q">${q.cat}</div>
+            <div class="bd-a">${q.opts[a]}</div>
+            <div class="bd-pts ${cls}">${pts}/3 pts</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="cta-block" style="margin-bottom:24px;">
+        <div class="cta-tag">// YOUR NEXT MOVE</div>
+        <div class="cta-h2">KNOW YOUR EXACT NUMBERS</div>
+        <p class="cta-p">Whatever your score — tracking your Bitcoin stack properly is the one habit that changes everything.</p>
+        <div class="cta-btns">
+          <a href="YOUR_WHOP_LINK" class="btn-pri">GET THE TRACKER 🟠</a>
+          <a href="YOUR_WHOP_LINK" class="btn-sec">VIEW ON WHOP</a>
+        </div>
+        <div class="cta-note">Basic Tracker <span>$9.99</span> &nbsp;·&nbsp; Pro System <span>$19.99</span> &nbsp;·&nbsp; No subscription. Ever.</div>
+      </div>
+      <button class="restart-btn" onclick="initQuiz()">↺ RETAKE THE QUIZ</button>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
